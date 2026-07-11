@@ -1,0 +1,48 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import Category from "@/components/Category.astro";
+import config from "@/config";
+
+const posts = await getCollection("posts", ({ data }) => !data.draft);
+
+const categories = [
+  ...new Set(
+    posts
+      .map(({ data }) => data.category)
+      .filter(Boolean)
+  ),
+].map((category) => ({
+  category,
+  categoryName: category,
+}));
+
+---
+
+<Layout title={`分类 | ${config.site.title}`}>
+  <Header />
+
+  <Breadcrumb />
+
+  <Main
+    pageTitle="分类"
+    pageDesc="浏览所有文章分类。"
+  >
+    <ul class="flex flex-wrap gap-6">
+      {
+        categories.map(({ category, categoryName }) => (
+          <Category
+            category={category}
+            categoryName={categoryName}
+          />
+        ))
+      }
+    </ul>
+  </Main>
+
+  <Footer />
+</Layout>
