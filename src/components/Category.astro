@@ -1,6 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
-import IconHash from "@/assets/icons/IconHash.svg";
+import IconCategory from "@/assets/icons/IconCategory.svg";
 import config from "@/config";
 
 type Props = {
@@ -26,7 +26,7 @@ const locale = Astro.currentLocale ?? config.site.lang;
       { "text-lg": size === "lg" },
     ]}
   >
-    <IconHash
+    <IconCategory
       class:list={[
         "opacity-80",
         { "size-5": size === "lg" },
