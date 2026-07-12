@@ -6,7 +6,7 @@ export default defineAstroPaperConfig({
     title: "Shane Blog",
     description: "谢恩的个人静态博客用于 分享技术 ",
     author: "Shane",
-    profile: "https://satna.ing",
+    profile: "https://github.com/shane00413-wq",
     ogImage: "default-og.jpg",
     lang: "zh-CN",
     timezone: "Asia/Shanghai",
@@ -24,15 +24,13 @@ export default defineAstroPaperConfig({
     showBackButton: true,
     editPost: {
       enabled: false,
-      url: "https://github.com/satnaing/astro-paper/edit/main/",
     },
     search: "pagefind",
   },
   socials: [
-    { name: "github",   url: "https://github.com/satnaing/astro-paper" },
-    { name: "x",        url: "https://x.com/username" },
-    { name: "linkedin", url: "https://www.linkedin.com/in/username/" },
-    { name: "mail",     url: "mailto:yourmail@gmail.com" },
+    { name: "github",   url: "https://github.com/shane00413-wq/shane-blog" },
+    { name: "telegram", url: "https://t.me/Shane-0413" },
+    { name: "mail",     url: "mailto:shane00413@gmail.com" },
   ],
   shareLinks: [
     { name: "whatsapp", url: "https://wa.me/?text=" },

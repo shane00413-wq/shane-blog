@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build && pagefind --site dist && cp -r dist/pagefind public/",
+    "push": "git add . && git commit -m \"update\" && git push",
+    "new-post": "node scripts/new-post.js",
     "preview": "astro preview",
     "sync": "astro sync",
     "astro": "astro",

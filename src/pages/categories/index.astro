@@ -17,17 +17,14 @@ const categories = [
       .filter(Boolean)
   ),
 ].map((category) => ({
-  category,
-  categoryName: category,
+  category: category ?? "",
+  categoryName: category ?? "",
 }));
-
 ---
 
 <Layout title={`分类 | ${config.site.title}`}>
   <Header />
-
   <Breadcrumb />
-
   <Main
     pageTitle="分类"
     pageDesc="浏览所有文章分类。"
@@ -43,6 +40,5 @@ const categories = [
       }
     </ul>
   </Main>
-
   <Footer />
 </Layout>
