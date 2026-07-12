@@ -5,6 +5,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Datetime from "@/components/Datetime.astro";
 import Tag from "@/components/Tag.astro";
+import Category from "@/components/Category.astro";
 import { getPostSlug, getPostUrl } from "@/utils/getPostPaths";
 import { getSortedPosts } from "@/utils/getSortedPosts";
 import { slugifyStr } from "@/utils/slugify";
@@ -68,6 +69,7 @@ const {
   modDatetime,
   timezone,
   tags,
+  category,
   hideEditPost,
 } = post.data;
 
@@ -131,6 +133,14 @@ const ogImage = ogImageUrl
       </span>
       <EditPost {hideEditPost} {post} class="max-sm:hidden" />
     </div>
+
+    {
+      category && (
+        <ul class="mb-4 flex flex-wrap gap-4">
+          <Category category={category} categoryName={category} size="sm" />
+        </ul>
+      )
+    }
 
     <article
       id="article"
