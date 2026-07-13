@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from "astro:transitions";
 import { Font } from "astro:assets";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { resolveDefaultOgImagePath } from "@/utils/resolveDefaultOgImagePath";
@@ -23,6 +24,7 @@ const {
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, Astro.site ?? Astro.url);
+
 const rssHref = getRelativeLocaleUrl(
   Astro.currentLocale ?? config.site.lang,
   "rss.xml"
@@ -39,9 +41,10 @@ const rssHref = getRelativeLocaleUrl(
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <ClientRouter />
+
     <link rel="icon" type="image/svg+xml" href={getAssetPath("favicon.svg")} />
     <link rel="icon" href={getAssetPath("favicon.ico")} />
-
     <link rel="canonical" href={canonicalURL} />
     <meta name="generator" content={Astro.generator} />
 
@@ -52,7 +55,6 @@ const rssHref = getRelativeLocaleUrl(
     />
 
     <title>{title}</title>
-
     <meta name="title" content={title} />
     <meta name="description" content={description} />
     <meta name="author" content={site.author} />
@@ -101,14 +103,10 @@ const rssHref = getRelativeLocaleUrl(
         const prefersDark = window.matchMedia(
           "(prefers-color-scheme: dark)"
         ).matches;
-
         const theme = stored ?? (prefersDark ? "dark" : "light");
-
         const root = document.firstElementChild;
-
         root?.setAttribute("data-theme", theme);
         root?.classList.toggle("dark", theme === "dark");
-
         window.__theme = { value: theme };
       })();
     </script>
