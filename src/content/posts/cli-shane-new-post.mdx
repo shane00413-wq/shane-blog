@@ -1,0 +1,157 @@
+---
+author: Shane
+pubDatetime: 2026-07-17T22:10:00+08:00
+title: 写了个小工具 shane-new-post，让新建博客文章这件事更省心
+featured: false
+draft: false
+tags:
+  - shane-new-post
+  - cli
+  - 工具
+category: 工具
+description: 记录一下 shane-new-post 这个 npm 小工具的来龙去脉：为什么写、能做什么、怎么装、怎么用。
+---
+
+import LinkButton from "@/components/LinkButton.astro";
+
+# 写了个小工具 shane-new-post，让新建博客文章这件事更省心
+
+上一篇随笔里提到过，搭博客的过程中受不了每次手动敲 frontmatter 的重复劳动，于是写了个小工具叫 `shane-new-post`。这篇专门展开讲讲它，算是这个系列的第一篇。
+
+## 起因：frontmatter 这东西手打太容易出错
+
+用 Astro 的内容集合（Content Collections）功能时，每篇文章开头那段 YAML frontmatter 是要过 schema 校验的——字段名不能错，日期格式不能错，数组语法也不能错。手写的时候最容易翻车的就是这几个地方：
+
+- 日期格式忘了带时区，或者干脆手滑打错一位数字
+- `tags` 写成了字符串而不是数组，或者数组里留了个空字符串
+- 忘记给必填字段赋值，构建的时候才报错，回头还得翻文档确认是哪个字段的问题
+
+这些错误单个看都不严重，但次数一多就很消耗耐心。`shane-new-post` 要解决的就是这一件事：把新建文章这个动作变成一条命令或者几个问题，剩下的交给脚本去拼接出合法的 frontmatter。
+
+## 这个工具是给谁用的
+
+需要说明一下适用范围：`shane-new-post` 不是给任意博客用的通用工具，它是**为 AstroPaper 风格的 Astro 博客**准备的——也就是任何一个内容集合的 frontmatter 结构里带有 `title` / `pubDatetime` / `tags` / `featured` / `draft` 这一类字段的项目。如果你的博客走的是完全不同的技术栈，这个工具大概率用不上。
+
+## 安装方式
+
+跟 `npm create astro@latest` 是同一个套路，装的时候有两种选择。
+
+推荐用一键安装命令，在项目根目录（`package.json` 所在的目录）执行：
+
+```bash
+# npm
+npm create shane-new-post@latest
+
+# pnpm
+pnpm create shane-new-post@latest
+
+# yarn
+yarn create shane-new-post
+```
+
+这条命令会自动完成一整套事情：扫描项目里有没有同名或者近似命名的脚本可能会冲突（比如你之前手写过一个 `new-post.js`），有的话会先问你要不要清理；自动识别当前用的是 npm、pnpm 还是 yarn，用对应的方式安装依赖；如果包管理器跳过了生命周期脚本（新版 pnpm 常见这种情况），会自动兜底手动执行一遍安装脚本，保证流程无论如何都能跑完整。
+
+也可以选择手动安装：
+
+```bash
+npm install -D shane-new-post
+# 或
+pnpm add -D shane-new-post
+# 或
+yarn add -D shane-new-post
+```
+
+> [!CAUTION] pnpm 用户注意
+> pnpm v9 / v10 默认会拦截新依赖的安装脚本。手动安装完之后记得跑一下 `pnpm approve-builds`，用方向键选中 `shane-new-post`，空格勾选，回车确认。或者干脆在 `package.json` 里提前写好：
+> ```json
+> "pnpm": { "onlyBuiltDependencies": ["shane-new-post"] }
+> ```
+> 一劳永逸，以后再装类似的包也不用每次手动确认。
+
+装好之后，项目根目录会多出这些东西：
+
+```
+src/
+  content/
+    posts/
+public/
+  img/
+scripts/
+  new-post.js
+.shane-new-post.json   # 保存了语言和默认作者名
+package.json           # scripts 里多了 new-post 这一条
+```
+
+`pnpm new-post`（或者 `npm run new-post` / `yarn new-post`）装完就能直接用。
+
+## 两种使用方式
+
+### 交互模式
+
+不带任何参数直接跑：
+
+```bash
+pnpm new-post
+```
+
+会按顺序问你几个问题：标题（必填）；文件名（会根据标题自动建议一个 slug，直接回车采用，或者自己输入别的）；标签（逗号分隔，可以跳过，跳过前还会把之前用过的标签列出来给你参考）；描述、是否精选、是否草稿、要不要用 `.mdx` 而不是 `.md`，这几项都可以直接回车用默认值。
+
+### 命令模式
+
+一条命令直接搞定，适合已经想好内容、不想被一路问下去的场景：
+
+```bash
+pnpm new-post "getting-started" title:Getting Started/description:An intro post/tags:[astro,web]/draft:F/featured:T/mdx:T
+```
+
+规则很简单：**第一个位置参数必须是文件名**，这是唯一位置固定的部分；后面的 `key:value` 键值对用 `/` 分隔，顺序随便写，也可以拆成多行用反斜杠 `\` 接续：
+
+```bash
+pnpm new-post "getting-started" \
+  mdx:T \
+  featured:T \
+  title:Getting Started \
+  tags:[astro,web] \
+  draft:F \
+  description:An intro post
+```
+
+上面两条命令是完全等价的。
+
+参数表：
+
+| 键 | 别名 | 是否必填 | 说明 |
+|---|---|---|---|
+| `title` | — | 是 | 文章标题，命令模式下缺失会直接报错退出 |
+| `description` | `desc` | 否 | 不填就是空字符串 |
+| `tags` | `tag` | 否 | 方括号包裹、逗号分隔：`[tag1,tag2]` |
+| `draft` | — | 否 | 布尔值，默认 `false` |
+| `featured` | — | 否 | 布尔值，默认 `false` |
+| `mdx` | — | 否 | 布尔值，`T`/`true` 生成 `.mdx`，否则生成 `.md` |
+
+布尔值这块有个统一规则：大小写不敏感，只有 `t` 或者 `true`（不管大小写）会被识别成"是"，其它任何值——`f`、`false`、空字符串，甚至干脆不写这个键——都算"否"。没有单独判断"false"这一说，逻辑上就是"不是真就是假"。
+
+遇到拼错的键名或者不认识的键，脚本只会打印一条警告然后跳过，不会因此中断整个创建流程——这点我个人觉得挺重要的，总不能因为一个可选字段打错字就前功尽弃。
+
+## 每次新建文章会自动做的两件小事
+
+- 在 `src/content/posts/` 下生成对应的 `.md`（或 `.mdx`）文件，frontmatter 已经按 schema 拼好
+- 顺手在 `public/img/` 下建一个和文件名同名的空文件夹，方便这篇文章要用的配图直接往里丢，不用自己再手动建目录
+
+另外这个工具**不会覆盖同名文件**——如果目标文件名已经存在，会直接报错退出，不会有任何写入动作，避免手滑覆盖掉已经写好的内容。
+
+## 想看完整文档
+
+这篇算是一个概览，命令模式的每一个参数、交互模式每一步的详细行为、还有一些边界情况（比如 frontmatter 里字符串值的转义规则），我都写进了文档站里，感兴趣可以直接跳过去看：
+
+<LinkButton href="https://shane-docs.pages.dev/zh-cn/cli/new-post/" target="_blank" rel="noopener noreferrer">
+  查看 shane-new-post 完整用法文档 →
+</LinkButton>
+
+源码也是开源的：
+
+<LinkButton href="https://github.com/shane00413-wq/shane-new-post" target="_blank" rel="noopener noreferrer">
+  GitHub 仓库 →
+</LinkButton>
+
+下一篇打算讲讲它的兄弟工具 `shane-new-doc`——专门给 Starlight 文档站用的那一个，接口风格类似，但因为要适配文档站的目录结构，细节上有些不一样的地方。

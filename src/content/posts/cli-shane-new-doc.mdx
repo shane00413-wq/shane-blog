@@ -1,0 +1,146 @@
+---
+author: Shane
+pubDatetime: 2026-07-18T22:40:00+08:00
+title: shane-new-doc：给 Starlight 文档站配套的脚手架
+featured: false
+draft: false
+tags:
+  - shane-new-doc
+  - cli
+  - starlight
+category: 工具
+description: shane-new-post 的兄弟工具 shane-new-doc，专门为 Astro Starlight 文档站的目录结构和 sidebar 排序而设计。
+---
+
+import LinkButton from "@/components/LinkButton.astro";
+
+# shane-new-doc：给 Starlight 文档站配套的脚手架
+
+上一篇讲了 `shane-new-post`，这篇讲讲它的兄弟工具 `shane-new-doc`。两者名字相近、命令风格也刻意保持了一致，但用途完全不同，不能混用。
+
+## 和 shane-new-post 的关键区别
+
+`shane-new-post` 是给 AstroPaper 风格的博客用的，文章都平铺在 `src/content/posts/` 一个目录下；而 `shane-new-doc` 是给 **Astro Starlight 文档站**用的，Starlight 的文档集合是**带层级目录**的，写在 `src/content/docs/<目录>/` 下面，还涉及 sidebar 排序这类文档站特有的概念。
+
+这也是这两个工具"不能互换"的根本原因：命令背后的目标 schema、目录结构完全不是一回事。选哪个工具，要看目标项目的框架是 AstroPaper 风格的博客，还是 `@astrojs/starlight` 文档站，而不是看你要写的内容类型。
+
+## 安装
+
+同样是两种方式，一键安装（推荐）：
+
+```bash
+npm create shane-new-doc@latest
+# 或
+pnpm create shane-new-doc@latest
+# 或
+yarn create shane-new-doc
+```
+
+手动安装：
+
+```bash
+npm install -D shane-new-doc
+# 或
+pnpm add -D shane-new-doc
+# 或
+yarn add -D shane-new-doc
+```
+
+装完之后目录长这样：
+
+```
+src/
+  content/
+    docs/
+scripts/
+  new-doc.js
+.shane-new-doc.json   # 保存语言选择，没有作者字段
+package.json          # scripts 里多了 new-doc
+```
+
+跟 `shane-new-post` 一个明显的差异是：设置过程中不会问"默认作者名"这个问题——因为 Starlight 官方的文档 schema 里压根没有 `author` 这个字段，写进去反而会导致 schema 校验失败，所以这一步直接跳过。
+
+## 交互模式
+
+不带参数直接跑：
+
+```bash
+pnpm new-doc
+```
+
+会依次问：
+
+- **目录**（必填）：相对于 `src/content/docs/` 的路径，留空会重新问一遍
+- **文件名**（必填）：会立刻检查非法字符，输错会重新提示
+- **标题 / 描述**（可选）：直接回车跳过，标题留空的话默认用文件名（去掉后缀）
+- **sidebar 排序**（可选）：对应 frontmatter 里的 `sidebar.order`，必须是数字或者留空，写了非数字的东西会重新问
+
+## 命令模式
+
+和 `shane-new-post` 唯一的结构性差异：**前两个位置参数必须依次是目录和文件名**，这两个位置是固定的，剩下的 `key:value` 键值对才是自由顺序：
+
+```bash
+pnpm new-doc "guide" "getting-started" title:Getting Started/description:Intro to the project/order:1/mdx:T
+```
+
+同样支持拆行：
+
+```bash
+pnpm new-doc "guide" "getting-started" \
+  mdx:T \
+  order:1 \
+  title:Getting Started \
+  description:Intro to the project
+```
+
+参数表：
+
+| 键 | 别名 | 是否必填 | 说明 |
+|---|---|---|---|
+| `directory` | `dir` | 是 | 位置参数 #1，相对于 `src/content/docs/` |
+| `filename` | — | 是 | 位置参数 #2 |
+| `title` | — | 否 | 不填默认用文件名（去掉扩展名） |
+| `description` | `desc` | 否 | 不填就整段不写进 frontmatter |
+| `order` | `sidebarorder` | 否 | 必须是数字，写了非数字值会直接报错并中止命令 |
+| `mdx` | — | 否 | 布尔值，`T`/`true` 生成 `.mdx`，否则 `.md` |
+
+> [!NOTE] `dir` 也能当键值对写
+> `directory` 除了是必填的第一个位置参数，也有一个 `dir` 别名可以当作尾部的键值对使用。实际用的时候基本都是直接写位置参数，这个别名更多是为了跟其它键保持风格一致；如果两种写法同时出现，以尾部的 `dir:` 值为准。
+
+布尔值规则和 `shane-new-post` 保持一致：大小写不敏感，只有 `t`/`true` 算"是"，其余一律算"否"。
+
+## 生成结果长什么样
+
+```
+src/
+  content/
+    docs/
+      guide/
+        getting-started.md   ← 新文档，sidebar 排序 1
+public/
+  img/
+    guide/
+      getting-started/       ← 对应的空图片目录
+```
+
+有几个跟 `shane-new-post` 不太一样的细节值得留意：
+
+- **不会因为文件名冲突而拒绝创建**——如果目标文件已经存在，会自动在文件名后面加序号，比如生成 `getting-started(2).md`，而不是直接报错终止，同时会打印一条提示告诉你发生了什么
+- 图片文件夹会**镜像文档的子目录结构**，而不是简单地平铺在 `public/img/` 根目录下
+- 目录和文件名如果试图通过 `..` 之类的写法跳出 `src/content/docs/` 的范围，会被拒绝，即便字符校验那一关不知怎么被绕过了也有这层兜底
+
+另外这个工具**只会在检测到项目依赖里有 `@astrojs/starlight` 的情况下才生效**——如果装到一个不相关的项目里，postinstall 会直接打印提示然后什么都不做，不会误伤别的项目。
+
+## 完整文档在这
+
+`shane-new-doc` 具体的目录冲突检测逻辑、sidebar 排序细节、以及安装过程中每一步到底做了什么，都写在文档站里了：
+
+<LinkButton href="https://shane-docs.pages.dev/zh-cn/cli/new-doc/" target="_blank" rel="noopener noreferrer">
+  查看 shane-new-doc 完整用法文档 →
+</LinkButton>
+
+<LinkButton href="https://github.com/shane00413-wq/shane-new-doc" target="_blank" rel="noopener noreferrer">
+  GitHub 仓库 →
+</LinkButton>
+
+这两个工具背后共用了一套很相似的安装脚本逻辑——识别项目类型、自动生成脚本、写配置文件、注入 `package.json` 的 `scripts` 字段。下一篇打算专门拆开讲讲这个 `postinstall` 脚本具体是怎么运作的，属于稍微硬核一点的内容，感兴趣的话可以接着往下看。
